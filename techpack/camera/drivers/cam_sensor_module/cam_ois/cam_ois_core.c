@@ -580,7 +580,6 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 			if (!cmd_buf) {
 				CAM_ERR(CAM_OIS, "invalid cmd buf");
 				rc = -EINVAL;
-				cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
 				goto end;
 			}
 
@@ -590,7 +589,6 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 				CAM_ERR(CAM_OIS,
 					"Invalid length for sensor cmd");
 				rc = -EINVAL;
-				cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
 				goto end;
 			}
 			remain_len = len_of_buff - cmd_desc[i].offset;
@@ -658,7 +656,6 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 			}
 			break;
 			}
-			cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
 
 			if (rc < 0)
 				goto end;
@@ -876,6 +873,7 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 		goto end;
 	}
 
+	cam_mem_put_cpu_buf(dev_config.packet_handle);
 	if (!rc)
 		goto end;
 
@@ -884,7 +882,6 @@ pwr_dwn:
 end:
 	cam_common_mem_free(csl_packet);
 put_ref:
-	cam_mem_put_cpu_buf(dev_config.packet_handle);
 	return rc;
 }
 
