@@ -3090,6 +3090,7 @@ static int mmc_blk_probe(struct mmc_card *card)
 	mmc_blk_add_debugfs(card, md);
 
 	pm_runtime_set_autosuspend_delay(&card->dev, 3000);
+
 	pm_runtime_use_autosuspend(&card->dev);
 
 	/*
