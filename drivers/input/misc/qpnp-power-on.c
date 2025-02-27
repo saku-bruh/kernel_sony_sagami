@@ -151,6 +151,7 @@ enum qpnp_pon_version {
 #define QPNP_PON_KPDPWR_ON			BIT(0)
 
 #define QPNP_PON_DVDD_HARD_RESET_SET		0x08
+
 /* Limits */
 #define QPNP_PON_S1_TIMER_MAX			10256
 #define QPNP_PON_S2_TIMER_MAX			2000
@@ -169,6 +170,12 @@ enum qpnp_pon_version {
 #define QPNP_PON_BUFFER_SIZE			9
 
 #define QPNP_POFF_REASON_UVLO			13
+#define PON_S2RESET_MASK \
+	(QPNP_PON_KPDPWR_N_SET | QPNP_PON_RESIN_N_SET)
+
+#define PON_S2RESET_MASK \
+	(QPNP_PON_KPDPWR_N_SET | QPNP_PON_RESIN_N_SET)
+
 #define PON_S2RESET_MASK \
 	(QPNP_PON_KPDPWR_N_SET | QPNP_PON_RESIN_N_SET)
 
@@ -1087,6 +1094,20 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 			cancel_delayed_work_sync(&pon->resin_status_work);
 	}
 
+	if ((cfg->pon_type == PON_RESIN) || (cfg->pon_type == PON_KPDPWR)) {
+		if ((pon_rt_sts & PON_S2RESET_MASK) == PON_S2RESET_MASK)
+			schedule_delayed_work(&pon->resin_status_work, QPNP_RESIN_STATUS_DELAY);
+		else
+			cancel_delayed_work_sync(&pon->resin_status_work);
+	}
+
+	if ((cfg->pon_type == PON_RESIN) || (cfg->pon_type == PON_KPDPWR)) {
+		if ((pon_rt_sts & PON_S2RESET_MASK) == PON_S2RESET_MASK)
+			schedule_delayed_work(&pon->resin_status_work, QPNP_RESIN_STATUS_DELAY);
+		else
+			cancel_delayed_work_sync(&pon->resin_status_work);
+	}
+
 	if (pon->kpdpwr_dbc_enable && cfg->pon_type == PON_KPDPWR) {
 		if (!key_status)
 			pon->kpdpwr_last_release_time = ktime_get();
@@ -1117,6 +1138,8 @@ static irqreturn_t qpnp_kpdpwr_irq(int irq, void *_pon)
 {
 	int rc;
 	struct qpnp_pon *pon = _pon;
+
+	dev_err(pon->dev, "Receive POWER_KEY input event\n");
 
 	rc = qpnp_pon_input_dispatch(pon, PON_KPDPWR);
 	if (rc)
@@ -1217,6 +1240,7 @@ static void resin_status_work_func(struct work_struct *work)
 {
 	pr_err("$$$$ Stage 2 reset (RESIN) $$$$\n");
 }
+
 static void bark_work_func(struct work_struct *work)
 {
 	struct qpnp_pon *pon =
